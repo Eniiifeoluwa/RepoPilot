@@ -98,7 +98,7 @@ except Exception:
     score = 0.0
 
 # prepare comment
-comment = def confidence_to_words(score: float) -> str:
+def confidence_to_words(score: float) -> str:
     percent = score * 100
     if percent >= 80:
         return "I am very confident"

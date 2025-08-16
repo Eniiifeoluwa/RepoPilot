@@ -1,100 +1,685 @@
-<!doctype html>
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta charset="utf-8">
-  <title>AI GitHub Assistant</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <style>
-    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Arial,sans-serif;margin:20px;max-width:1100px}
-    h1{margin-bottom:14px}
-    table{border-collapse:collapse;width:100%}
-    th,td{border:1px solid #ddd;padding:8px;vertical-align:top}
-    th{background:#f5f5f5;text-align:left}
-    .mono{font-family:ui-monospace,Consolas,monospace;font-size:12px}
-    .label{display:inline-block;padding:2px 6px;border-radius:4px;background:#eee}
-    .muted{color:#666}
-    pre{white-space:pre-wrap;max-width:420px;overflow:hidden}
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI GitHub Assistant</title>
+    <style>
+        :root {
+            --primary-color: #0969da;
+            --secondary-color: #21262d;
+            --accent-color: #238636;
+            --danger-color: #da3633;
+            --warning-color: #fb8500;
+            --text-primary: #e6edf3;
+            --text-secondary: #7d8590;
+            --background-primary: #0d1117;
+            --background-secondary: #161b22;
+            --border-color: #30363d;
+            --hover-color: #21262d;
+            --card-bg: #161b22;
+            --gradient: linear-gradient(135deg, #0969da, #238636);
+        }
+
+        [data-theme="light"] {
+            --text-primary: #24292f;
+            --text-secondary: #656d76;
+            --background-primary: #ffffff;
+            --background-secondary: #f6f8fa;
+            --border-color: #d0d7de;
+            --hover-color: #f6f8fa;
+            --card-bg: #ffffff;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: var(--background-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            transition: all 0.3s ease;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Header */
+        .header {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: var(--gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .header-subtitle {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            margin-bottom: 24px;
+        }
+
+        /* Controls */
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 24px;
+        }
+
+        .search-filter-group {
+            display: flex;
+            gap: 12px;
+            flex: 1;
+            min-width: 300px;
+        }
+
+        .search-box {
+            flex: 1;
+            padding: 12px 16px;
+            background: var(--background-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .search-box:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(9, 105, 218, 0.1);
+        }
+
+        .filter-select {
+            padding: 12px 16px;
+            background: var(--background-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 14px;
+            min-width: 120px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .filter-select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        .theme-controls {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .theme-toggle {
+            padding: 10px 16px;
+            background: var(--background-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-primary);
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .theme-toggle:hover {
+            background: var(--hover-color);
+            border-color: var(--primary-color);
+        }
+
+        /* Stats */
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            display: block;
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-top: 4px;
+        }
+
+        /* Table */
+        .table-container {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .table th,
+        .table td {
+            padding: 16px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+            vertical-align: top;
+        }
+
+        .table th {
+            background: var(--background-secondary);
+            font-weight: 600;
+            color: var(--text-primary);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .table th:hover {
+            background: var(--hover-color);
+        }
+
+        .table tr {
+            transition: all 0.3s ease;
+        }
+
+        .table tbody tr:hover {
+            background: var(--hover-color);
+        }
+
+        /* Labels */
+        .label {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .label.bug { background: rgba(218, 54, 51, 0.1); color: var(--danger-color); }
+        .label.enhancement { background: rgba(35, 134, 54, 0.1); color: var(--accent-color); }
+        .label.question { background: rgba(9, 105, 218, 0.1); color: var(--primary-color); }
+        .label.feature { background: rgba(251, 133, 0, 0.1); color: var(--warning-color); }
+        .label.documentation { background: rgba(116, 116, 116, 0.1); color: var(--text-secondary); }
+
+        /* Type badges */
+        .type-badge {
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .type-badge.issue { background: var(--danger-color); color: white; }
+        .type-badge.pr { background: var(--accent-color); color: white; }
+        .type-badge.discussion { background: var(--primary-color); color: white; }
+
+        /* Score */
+        .score {
+            font-weight: 700;
+            padding: 4px 8px;
+            border-radius: 6px;
+            background: var(--background-secondary);
+        }
+
+        .score.high { background: rgba(35, 134, 54, 0.1); color: var(--accent-color); }
+        .score.medium { background: rgba(251, 133, 0, 0.1); color: var(--warning-color); }
+        .score.low { background: rgba(116, 116, 116, 0.1); color: var(--text-secondary); }
+
+        /* Links */
+        .repo-link {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-family: 'SF Mono', Monaco, Consolas, monospace;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .repo-link:hover {
+            text-decoration: underline;
+        }
+
+        .issue-link {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .issue-link:hover {
+            text-decoration: underline;
+        }
+
+        /* Summary */
+        .summary {
+            font-size: 13px;
+            line-height: 1.5;
+            max-width: 350px;
+            color: var(--text-secondary);
+        }
+
+        /* Time */
+        .time {
+            color: var(--text-secondary);
+            font-size: 12px;
+            white-space: nowrap;
+        }
+
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-secondary);
+        }
+
+        /* Empty state */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-secondary);
+        }
+
+        .empty-icon {
+            font-size: 4rem;
+            margin-bottom: 16px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                padding: 12px;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .search-filter-group {
+                min-width: auto;
+            }
+            
+            .stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .table th,
+            .table td {
+                padding: 12px 8px;
+                font-size: 14px;
+            }
+            
+            .summary {
+                max-width: 200px;
+            }
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .table tbody tr {
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        /* Sort indicators */
+        .sort-indicator {
+            margin-left: 8px;
+            font-size: 12px;
+            opacity: 0.5;
+        }
+
+        .sort-asc .sort-indicator::after { content: '↑'; }
+        .sort-desc .sort-indicator::after { content: '↓'; }
+    </style>
 </head>
 <body>
-  <h1>AI GitHub Assistant</h1>
-  <table>
-    <thead>
-      <tr>
-        <th>Repo</th>
-        <th>#</th>
-        <th>Type</th>
-        <th>Title</th>
-        <th>Label</th>
-        <th>Score</th>
-        <th>Summary</th>
-        <th>When</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for r in rows %}
-      <tr>
-        <td class="mono">{{ r[0] }}</td>
-        <td><a target="_blank" href="https://github.com/{{ r[0] }}/issues/{{ r[1] }}">{{ r[1] }}</a></td>
-        <td>{{ r[2] }}</td>
-        <td>{{ r[3] }}</td>
-        <td><span class="label">{{ r[4] }}</span></td>
-        <td>{{ "%.2f"|format(r[5]) }}</td>
-        <td><pre>{{ r[6] }}</pre></td>
-        <td class="muted">{{ r[7] }}</td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-</body>
-</html>
-<!doctype html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <title>AI GitHub Assistant</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <style>
-    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Arial,sans-serif;margin:20px;max-width:1100px}
-    h1{margin-bottom:14px}
-    table{border-collapse:collapse;width:100%}
-    th,td{border:1px solid #ddd;padding:8px;vertical-align:top}
-    th{background:#f5f5f5;text-align:left}
-    .mono{font-family:ui-monospace,Consolas,monospace;font-size:12px}
-    .label{display:inline-block;padding:2px 6px;border-radius:4px;background:#eee}
-    .muted{color:#666}
-    pre{white-space:pre-wrap;max-width:420px;overflow:hidden}
-  </style>
-</head>
-<body>
-  <h1>AI GitHub Assistant</h1>
-  <table>
-    <thead>
-      <tr>
-        <th>Repo</th>
-        <th>#</th>
-        <th>Type</th>
-        <th>Title</th>
-        <th>Label</th>
-        <th>Score</th>
-        <th>Summary</th>
-        <th>When</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for r in rows %}
-      <tr>
-        <td class="mono">{{ r[0] }}</td>
-        <td><a target="_blank" href="https://github.com/{{ r[0] }}/issues/{{ r[1] }}">{{ r[1] }}</a></td>
-        <td>{{ r[2] }}</td>
-        <td>{{ r[3] }}</td>
-        <td><span class="label">{{ r[4] }}</span></td>
-        <td>{{ "%.2f"|format(r[5]) }}</td>
-        <td><pre>{{ r[6] }}</pre></td>
-        <td class="muted">{{ r[7] }}</td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>
+                🤖 AI GitHub Assistant
+            </h1>
+            <p class="header-subtitle">
+                Intelligent GitHub issue and pull request analysis dashboard
+            </p>
+            
+            <!-- Controls -->
+            <div class="controls">
+                <div class="search-filter-group">
+                    <input type="text" class="search-box" placeholder="Search repositories, titles, or summaries..." id="searchInput">
+                    <select class="filter-select" id="typeFilter">
+                        <option value="">All Types</option>
+                        <option value="issue">Issues</option>
+                        <option value="pr">Pull Requests</option>
+                        <option value="discussion">Discussions</option>
+                    </select>
+                    <select class="filter-select" id="labelFilter">
+                        <option value="">All Labels</option>
+                        <option value="bug">Bug</option>
+                        <option value="enhancement">Enhancement</option>
+                        <option value="question">Question</option>
+                        <option value="feature">Feature</option>
+                        <option value="documentation">Documentation</option>
+                    </select>
+                </div>
+                <div class="theme-controls">
+                    <button class="theme-toggle" id="themeToggle">
+                        🌙 Dark Mode
+                    </button>
+                </div>
+            </div>
+
+            <!-- Stats -->
+            <div class="stats">
+                <div class="stat-card">
+                    <span class="stat-number" id="totalItems">0</span>
+                    <span class="stat-label">Total Items</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-number" id="avgScore">0.00</span>
+                    <span class="stat-label">Avg Score</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-number" id="highPriority">0</span>
+                    <span class="stat-label">High Priority</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-number" id="activeRepos">0</span>
+                    <span class="stat-label">Active Repos</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Table -->
+        <div class="table-container">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th data-sort="repo">Repository <span class="sort-indicator"></span></th>
+                        <th data-sort="number"># <span class="sort-indicator"></span></th>
+                        <th data-sort="type">Type <span class="sort-indicator"></span></th>
+                        <th data-sort="title">Title <span class="sort-indicator"></span></th>
+                        <th data-sort="label">Label <span class="sort-indicator"></span></th>
+                        <th data-sort="score">Score <span class="sort-indicator"></span></th>
+                        <th>Summary</th>
+                        <th data-sort="time">When <span class="sort-indicator"></span></th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    <!-- Data will be populated here -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // Sample data
+        const sampleData = [
+            ['microsoft/vscode', '45123', 'issue', 'Add AI-powered code suggestions', 'enhancement', 8.7, 'Implement machine learning-based code completion that learns from user patterns and suggests contextually relevant code snippets.', '2 hours ago'],
+            ['openai/gpt-4', '892', 'pr', 'Fix memory leak in transformer attention', 'bug', 9.2, 'Resolves memory allocation issues in the multi-head attention mechanism that were causing performance degradation in long sequences.', '4 hours ago'],
+            ['tensorflow/tensorflow', '67234', 'issue', 'GPU memory optimization for large models', 'feature', 7.8, 'Request for better GPU memory management when training large neural networks to prevent out-of-memory errors.', '1 day ago'],
+            ['pytorch/pytorch', '23456', 'discussion', 'Best practices for model quantization', 'question', 6.5, 'Community discussion about effective techniques for model quantization while maintaining accuracy in production deployments.', '2 days ago'],
+            ['huggingface/transformers', '12789', 'pr', 'Add support for new BERT variant', 'enhancement', 8.1, 'Implementation of RoBERTa-v2 with improved pre-training objectives and better performance on downstream tasks.', '3 days ago'],
+            ['google/jax', '5432', 'issue', 'JAX compilation errors on ARM processors', 'bug', 7.3, 'Compilation issues when running JAX programs on Apple Silicon and other ARM-based processors, affecting model training.', '1 week ago'],
+            ['facebook/react', '34567', 'issue', 'Improve accessibility in components', 'enhancement', 6.9, 'Enhancement request to add better ARIA support and keyboard navigation to core React components.', '1 week ago'],
+            ['vercel/next.js', '78901', 'pr', 'Optimize bundle size for AI applications', 'feature', 8.4, 'Reduces bundle size for applications using machine learning models by implementing tree-shaking and lazy loading.', '2 weeks ago'],
+            ['microsoft/TypeScript', '11223', 'issue', 'Type inference for ML model outputs', 'feature', 7.6, 'Feature request for better type inference when working with machine learning model outputs and tensor operations.', '2 weeks ago'],
+            ['anthropic/claude-api', '445', 'discussion', 'Rate limiting best practices', 'documentation', 5.8, 'Discussion about implementing proper rate limiting strategies when integrating with Claude API in production systems.', '3 weeks ago']
+        ];
+
+        let currentData = [...sampleData];
+        let sortColumn = null;
+        let sortDirection = 'asc';
+
+        // DOM elements
+        const searchInput = document.getElementById('searchInput');
+        const typeFilter = document.getElementById('typeFilter');
+        const labelFilter = document.getElementById('labelFilter');
+        const themeToggle = document.getElementById('themeToggle');
+        const tableBody = document.getElementById('tableBody');
+
+        // Stats elements
+        const totalItems = document.getElementById('totalItems');
+        const avgScore = document.getElementById('avgScore');
+        const highPriority = document.getElementById('highPriority');
+        const activeRepos = document.getElementById('activeRepos');
+
+        // Initialize
+        function init() {
+            renderTable();
+            updateStats();
+            setupEventListeners();
+        }
+
+        // Event listeners
+        function setupEventListeners() {
+            searchInput.addEventListener('input', handleSearch);
+            typeFilter.addEventListener('change', handleFilter);
+            labelFilter.addEventListener('change', handleFilter);
+            themeToggle.addEventListener('click', toggleTheme);
+            
+            // Sort listeners
+            document.querySelectorAll('[data-sort]').forEach(th => {
+                th.addEventListener('click', () => handleSort(th.dataset.sort));
+            });
+        }
+
+        // Search functionality
+        function handleSearch() {
+            const query = searchInput.value.toLowerCase();
+            currentData = sampleData.filter(row => {
+                return row[0].toLowerCase().includes(query) || // repo
+                       row[3].toLowerCase().includes(query) || // title
+                       row[6].toLowerCase().includes(query);   // summary
+            });
+            applyFilters();
+        }
+
+        // Filter functionality
+        function handleFilter() {
+            const typeValue = typeFilter.value;
+            const labelValue = labelFilter.value;
+            
+            currentData = sampleData.filter(row => {
+                const matchesType = !typeValue || row[2] === typeValue;
+                const matchesLabel = !labelValue || row[4] === labelValue;
+                const matchesSearch = !searchInput.value || 
+                    row[0].toLowerCase().includes(searchInput.value.toLowerCase()) ||
+                    row[3].toLowerCase().includes(searchInput.value.toLowerCase()) ||
+                    row[6].toLowerCase().includes(searchInput.value.toLowerCase());
+                
+                return matchesType && matchesLabel && matchesSearch;
+            });
+            
+            renderTable();
+            updateStats();
+        }
+
+        // Apply filters without search
+        function applyFilters() {
+            const typeValue = typeFilter.value;
+            const labelValue = labelFilter.value;
+            
+            if (typeValue || labelValue) {
+                currentData = currentData.filter(row => {
+                    const matchesType = !typeValue || row[2] === typeValue;
+                    const matchesLabel = !labelValue || row[4] === labelValue;
+                    return matchesType && matchesLabel;
+                });
+            }
+            
+            renderTable();
+            updateStats();
+        }
+
+        // Sort functionality
+        function handleSort(column) {
+            if (sortColumn === column) {
+                sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+            } else {
+                sortColumn = column;
+                sortDirection = 'asc';
+            }
+            
+            // Update sort indicators
+            document.querySelectorAll('[data-sort]').forEach(th => {
+                th.classList.remove('sort-asc', 'sort-desc');
+            });
+            document.querySelector(`[data-sort="${column}"]`).classList.add(`sort-${sortDirection}`);
+            
+            // Sort data
+            const columnIndex = {
+                repo: 0, number: 1, type: 2, title: 3, 
+                label: 4, score: 5, time: 7
+            }[column];
+            
+            currentData.sort((a, b) => {
+                let aVal = a[columnIndex];
+                let bVal = b[columnIndex];
+                
+                if (column === 'score' || column === 'number') {
+                    aVal = parseFloat(aVal);
+                    bVal = parseFloat(bVal);
+                }
+                
+                if (sortDirection === 'asc') {
+                    return aVal < bVal ? -1 : aVal > bVal ? 1 : 0;
+                } else {
+                    return aVal > bVal ? -1 : aVal < bVal ? 1 : 0;
+                }
+            });
+            
+            renderTable();
+        }
+
+        // Render table
+        function renderTable() {
+            if (currentData.length === 0) {
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="8" class="empty-state">
+                            <div class="empty-icon">🔍</div>
+                            <div>No items found matching your criteria</div>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tableBody.innerHTML = currentData.map(row => `
+                <tr>
+                    <td><a href="https://github.com/${row[0]}" class="repo-link" target="_blank">${row[0]}</a></td>
+                    <td><a href="https://github.com/${row[0]}/issues/${row[1]}" class="issue-link" target="_blank">${row[1]}</a></td>
+                    <td><span class="type-badge ${row[2]}">${row[2]}</span></td>
+                    <td>${row[3]}</td>
+                    <td><span class="label ${row[4]}">${row[4]}</span></td>
+                    <td><span class="score ${getScoreClass(row[5])}">${parseFloat(row[5]).toFixed(2)}</span></td>
+                    <td><div class="summary">${row[6]}</div></td>
+                    <td><span class="time">${row[7]}</span></td>
+                </tr>
+            `).join('');
+        }
+
+        // Get score class
+        function getScoreClass(score) {
+            const s = parseFloat(score);
+            if (s >= 8) return 'high';
+            if (s >= 6) return 'medium';
+            return 'low';
+        }
+
+        // Update stats
+        function updateStats() {
+            const total = currentData.length;
+            const scores = currentData.map(row => parseFloat(row[5]));
+            const avg = scores.length ? (scores.reduce((a, b) => a + b, 0) / scores.length) : 0;
+            const high = scores.filter(s => s >= 8).length;
+            const repos = new Set(currentData.map(row => row[0])).size;
+
+            totalItems.textContent = total;
+            avgScore.textContent = avg.toFixed(2);
+            highPriority.textContent = high;
+            activeRepos.textContent = repos;
+        }
+
+        // Theme toggle
+        function toggleTheme() {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+            
+            document.documentElement.setAttribute('data-theme', newTheme);
+            themeToggle.innerHTML = newTheme === 'light' ? '🌙 Dark Mode' : '☀️ Light Mode';
+            
+            localStorage.setItem('theme', newTheme);
+        }
+
+        // Load saved theme
+        function loadTheme() {
+            const savedTheme = localStorage.getItem('theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            themeToggle.innerHTML = savedTheme === 'light' ? '🌙 Dark Mode' : '☀️ Light Mode';
+        }
+
+        // Initialize app
+        loadTheme();
+        init();
+    </script>
 </body>
 </html>
