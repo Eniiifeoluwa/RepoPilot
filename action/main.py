@@ -27,6 +27,17 @@ with open(EVENT_PATH, "r", encoding="utf-8") as f:
 is_issue = "issue" in event
 is_pr = "pull_request" in event
 
+# Debug logging
+print(f"DEBUG: is_issue={is_issue}, is_pr={is_pr}")
+if is_issue:
+    print(f"DEBUG: Issue object exists: {event['issue'] is not None}")
+    if event["issue"]:
+        print(f"DEBUG: Issue has pull_request field: {event['issue'].get('pull_request') is not None}")
+if is_pr:
+    print(f"DEBUG: PR object exists: {event['pull_request'] is not None}")
+    if event["pull_request"]:
+        print(f"DEBUG: PR has head/base: {'head' in event['pull_request'] and 'base' in event['pull_request']}")
+
 if not (is_issue or is_pr):
     exit(0)
 
@@ -44,6 +55,16 @@ if is_pr and event["pull_request"] is not None:
         body = obj.get("body", "") or ""
         number = obj["number"]
         etype = "pull_request"
+    elif is_issue and event["issue"] is not None:
+        # Fallback to issue if PR validation fails
+        obj = event["issue"]
+        if not obj.get("pull_request"):
+            title = obj.get("title", "") or ""
+            body = obj.get("body", "") or ""
+            number = obj["number"]
+            etype = "issue"
+        else:
+            exit(0)
     else:
         exit(0)
 elif is_issue and event["issue"] is not None:
@@ -58,6 +79,9 @@ elif is_issue and event["issue"] is not None:
         exit(0)
 else:
     exit(0)
+
+# Debug: Show what was detected
+print(f"DEBUG: Final detection - etype='{etype}', number={number}, title='{title[:50]}...'")
 
 text = (title + "\n\n" + body).strip()
 if not text:
@@ -165,8 +189,8 @@ except Exception:
 # --- Push to Dashboard ---
 if DASHBOARD_URL:
     try:
-        # Convert etype to dashboard expected format
-        dashboard_type = "pr" if etype == "pull_request" else "issue"
+        # Send the exact format the dashboard expects to store
+        dashboard_type = "Pull Request" if etype == "pull_request" else "Issue"
         
         payload = {
             "repo": REPO,
@@ -183,4 +207,4 @@ if DASHBOARD_URL:
             payload=payload
         )
     except Exception:
-        pass
+        passpass
