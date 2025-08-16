@@ -69,10 +69,7 @@ Issue:
 """
 
 cls_prompt = f"""
-You are the best AI that categorizes GitHub issues, and I am sure. 
-Identify if the issue is a **documentation problem, or bug, feature, 
-or question, or enhancement, or refactor, or test, or ci, or security, you name it.**
-You will be given the issue text, and you will classify it into one of the issue categories,and no multiple categories.    
+You are the best AI that categorizes GitHub issues, identify if the issue and no multiple categories.    
 Here is the issue text:
 {txt_for_cls}
 """
