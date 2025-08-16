@@ -1,21 +1,26 @@
 name: AI Helper
+
 on:
   issues:
     types: [opened, edited]
   pull_request:
     types: [opened, edited, ready_for_review, synchronize]
+
 permissions:
   contents: read
   issues: write
   pull-requests: write
+
 jobs:
-  run:
+  ai-assistant:
+    name: 🤖 Run AI GitHub Assistant
     runs-on: ubuntu-latest
     env:
       HF_HOME: /tmp/hf_home
       TRANSFORMERS_CACHE: /tmp/hf_home
     steps:
       - uses: actions/checkout@v4
+
       - name: Run local action
         uses: ./action
         with:

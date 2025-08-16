@@ -21,7 +21,7 @@ def init_db():
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         repo TEXT,
         number INTEGER,
-        type TEXT,
+        type TEXT,            -- "Issue" or "Pull Request"
         title TEXT,
         summary TEXT,
         label TEXT,
@@ -36,14 +36,28 @@ init_db()
 
 @app.post("/ingest")
 async def ingest(item: dict):
-    required = ["repo","number","type","summary","label","score","title"]
+    # Required fields (same for issues and PRs)
+    required = ["repo", "number", "type", "summary", "label", "score", "title"]
     if any(k not in item for k in required):
         raise HTTPException(status_code=400, detail="bad payload")
+
+    # Normalize type
+    issue_type = "Pull Request" if item["type"].lower().startswith("pull") else "Issue"
+
     conn = sqlite3.connect(DB_PATH)
     cur = conn.cursor()
     cur.execute(
         "INSERT INTO events(repo,number,type,title,summary,label,score,created_at) VALUES(?,?,?,?,?,?,?,?)",
-        (item["repo"], int(item["number"]), item["type"], item["title"], item["summary"], item["label"], float(item["score"]), datetime.datetime.utcnow().isoformat()+"Z")
+        (
+            item["repo"],
+            int(item["number"]),
+            issue_type,
+            item["title"],
+            item["summary"],
+            item["label"],
+            float(item["score"]),
+            datetime.datetime.utcnow().isoformat() + "Z",
+        ),
     )
     conn.commit()
     conn.close()
@@ -53,7 +67,9 @@ async def ingest(item: dict):
 async def index(request: Request):
     conn = sqlite3.connect(DB_PATH)
     cur = conn.cursor()
-    cur.execute("SELECT repo, number, type, title, label, score, summary, created_at FROM events ORDER BY id DESC LIMIT 200")
+    cur.execute(
+        "SELECT repo, number, type, title, label, score, summary, created_at FROM events ORDER BY id DESC LIMIT 200"
+    )
     rows = cur.fetchall()
     conn.close()
     return templates.TemplateResponse("index.html", {"request": request, "rows": rows})
