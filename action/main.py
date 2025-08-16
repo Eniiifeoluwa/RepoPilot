@@ -163,7 +163,7 @@ if DASHBOARD_URL:
         payload = {
             "repo": REPO,
             "number": number,
-            "type": "Pull Request" if etype == "pull_request" else "Issue",
+            "type": "Pull Request" if etype == "pull_request" else "issue",
             "summary": summary,
             "label": top_label,
             "score": score,
