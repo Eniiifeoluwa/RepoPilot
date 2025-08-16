@@ -50,33 +50,29 @@
       overflow: hidden;
     }
 
-    .header::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Ccircle cx='30' cy='30' r='30'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
-    }
-
     .header h1 {
-      font-size: 3rem;
+      font-size: 2.5rem;
       font-weight: 700;
       margin-bottom: 10px;
-      position: relative;
-      z-index: 2;
       background: linear-gradient(45deg, #f093fb 0%, #f5576c 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
-      background-clip: text;
+    }
+
+    .repo-name {
+      display: inline-block;
+      font-family: 'SF Mono', monospace;
+      font-size: 1.1rem;
+      background: rgba(255, 255, 255, 0.15);
+      padding: 8px 16px;
+      border-radius: 20px;
+      margin-top: 10px;
     }
 
     .header p {
-      font-size: 1.2rem;
+      font-size: 1.1rem;
       opacity: 0.8;
-      position: relative;
-      z-index: 2;
+      margin-top: 10px;
     }
 
     .search-container {
@@ -146,11 +142,7 @@
       text-align: left;
       font-size: 14px;
       text-transform: uppercase;
-      letter-spacing: 0.5px;
       border-bottom: 2px solid #e2e8f0;
-      position: sticky;
-      top: 0;
-      z-index: 10;
     }
 
     tbody tr {
@@ -168,16 +160,6 @@
       padding: 20px 15px;
       vertical-align: top;
       border: none;
-    }
-
-    .mono {
-      font-family: 'SF Mono', monospace;
-      font-size: 13px;
-      background: #f8f9fa;
-      padding: 6px 10px;
-      border-radius: 6px;
-      color: #e83e8c;
-      font-weight: 600;
     }
 
     .issue-link {
@@ -250,12 +232,13 @@
   <div class="container">
     <div class="header">
       <h1>🤖 AI GitHub Assistant</h1>
-      <p>Manage your GitHub issues with AI-powered insights</p>
+      <div class="repo-name">{{ repo_name or "your-username/your-repo" }}</div>
+      <p>Live monitoring of issues with AI-powered insights</p>
     </div>
 
     <div class="search-container">
       <div class="search-box">
-        <input type="text" id="searchInput" class="search-input" placeholder="Search by repo, issue number, title, label, or summary...">
+        <input type="text" id="searchInput" class="search-input" placeholder="Search by issue number, title, label, or summary...">
         <button onclick="clearSearch()" class="clear-btn">✕ Clear</button>
       </div>
     </div>
@@ -264,7 +247,6 @@
       <table id="dataTable">
         <thead>
           <tr>
-            <th>Repo</th>
             <th>#</th>
             <th>Type</th>
             <th>Title</th>
@@ -277,8 +259,7 @@
         <tbody>
           {% for r in rows %}
           <tr>
-            <td class="mono">{{ r[0] }}</td>
-            <td><a href="https://github.com/{{ r[0] }}/issues/{{ r[1] }}" target="_blank" class="issue-link">#{{ r[1] }}</a></td>
+            <td><a href="https://github.com/{{ repo_name }}/issues/{{ r[1] }}" target="_blank" class="issue-link">#{{ r[1] }}</a></td>
             <td>{{ r[2] }}</td>
             <td>{{ r[3] }}</td>
             <td><span class="label" onclick="searchByLabel('{{ r[4] }}')">{{ r[4] }}</span></td>
