@@ -4,7 +4,7 @@ import requests
 import time
 from transformers import pipeline, logging
 
-# suppress warnings
+# --- Suppress warnings ---
 logging.set_verbosity_error()
 
 # --- Environment setup ---
@@ -24,74 +24,44 @@ if not EVENT_PATH or not REPO or not TOKEN:
 with open(EVENT_PATH, "r", encoding="utf-8") as f:
     event = json.load(f)
 
-is_issue = "issue" in event
-is_pr = "pull_request" in event
+# --- Determine event type ---
+etype = "issue"  # default
+obj = None
 
-# Debug logging
-print(f"DEBUG: is_issue={is_issue}, is_pr={is_pr}")
-if is_issue:
-    print(f"DEBUG: Issue object exists: {event['issue'] is not None}")
-    if event["issue"]:
-        print(f"DEBUG: Issue has pull_request field: {event['issue'].get('pull_request') is not None}")
-if is_pr:
-    print(f"DEBUG: PR object exists: {event['pull_request'] is not None}")
-    if event["pull_request"]:
-        print(f"DEBUG: PR has head/base: {'head' in event['pull_request'] and 'base' in event['pull_request']}")
-
-if not (is_issue or is_pr):
-    exit(0)
-
-title = ""
-body = ""
-number = 0
-etype = ""
-
-# Check for PR first to avoid misdetection (PRs can contain issue objects)
-if is_pr and event["pull_request"] is not None:
-    obj = event["pull_request"]
-    # Verify it's actually a PR by checking for head/base refs
-    if "head" in obj and "base" in obj:
-        title = obj.get("title", "") or ""
-        body = obj.get("body", "") or ""
-        number = obj["number"]
+# Check if payload is a Pull Request
+if "pull_request" in event and event["pull_request"]:
+    pr_obj = event["pull_request"]
+    if "head" in pr_obj and "base" in pr_obj:
         etype = "pull_request"
-    elif is_issue and event["issue"] is not None:
-        # Fallback to issue if PR validation fails
-        obj = event["issue"]
-        if not obj.get("pull_request"):
-            title = obj.get("title", "") or ""
-            body = obj.get("body", "") or ""
-            number = obj["number"]
-            etype = "issue"
-        else:
-            exit(0)
+        obj = pr_obj
+
+# If not PR, check for real Issue (not a PR masquerading)
+if etype == "issue" and "issue" in event and event["issue"]:
+    issue_obj = event["issue"]
+    if not issue_obj.get("pull_request"):  # real issue
+        obj = issue_obj
     else:
+        # Ignore issues that are actually PRs
         exit(0)
-elif is_issue and event["issue"] is not None:
-    obj = event["issue"]
-    # Make sure it's not a PR masquerading as an issue
-    if not obj.get("pull_request"):
-        title = obj.get("title", "") or ""
-        body = obj.get("body", "") or ""
-        number = obj["number"]
-        etype = "issue"
-    else:
-        exit(0)
-else:
+
+if not obj:
     exit(0)
 
-# Debug: Show what was detected
-print(f"DEBUG: Final detection - etype='{etype}', number={number}, title='{title[:50]}...'")
+number = obj.get("number", 0)
+title = obj.get("title", "") or ""
+body = obj.get("body", "") or ""
 
+print(f"DEBUG: Detected {etype} #{number} - '{title[:50]}...'")
+
+# --- Prepare text ---
 text = (title + "\n\n" + body).strip()
 if not text:
     text = "(empty)"
 
-# --- Truncate to safe lengths ---
 txt_for_sum = text[:1500]
 txt_for_cls = text[:1200]
 
-# --- Models (lightweight CPU) ---
+# --- Load Models ---
 SUM_MODEL = "sshleifer/distilbart-cnn-6-6"
 CLS_MODEL = "valhalla/distilbart-mnli-12-1"
 
@@ -107,9 +77,9 @@ except Exception:
 
 labels = ["bug", "feature", "documentation", "question", "enhancement", "refactor", "test", "ci", "security"]
 
+# --- Helper: safe POST ---
 def safe_post(url, headers, payload, retries=2, timeout=10):
-    """Retry POST requests a few times before giving up"""
-    for i in range(retries + 1):
+    for _ in range(retries + 1):
         try:
             return requests.post(url, headers=headers, json=payload, timeout=timeout)
         except Exception:
@@ -173,29 +143,27 @@ headers = {
     "Accept": "application/vnd.github+json"
 }
 
+# Post comment
 try:
     post_url = f"https://api.github.com/repos/{REPO}/issues/{number}/comments"
     requests.post(post_url, headers=headers, json={"body": comment}, timeout=10)
 except Exception:
     pass
 
-# --- Add label (best effort) ---
+# Add label
 try:
     label_url = f"https://api.github.com/repos/{REPO}/issues/{number}/labels"
     requests.post(label_url, headers=headers, json={"labels": [top_label]}, timeout=10)
 except Exception:
     pass
 
-# --- Push to Dashboard ---
+# Push to Dashboard
 if DASHBOARD_URL:
     try:
-        # Send the exact format the dashboard expects to store
-        dashboard_type = "Pull Request" if etype == "pull_request" else "Issue"
-        
         payload = {
             "repo": REPO,
             "number": number,
-            "type": dashboard_type,   
+            "type": "Pull Request" if etype == "pull_request" else "Issue",
             "summary": summary,
             "label": top_label,
             "score": score,
@@ -207,4 +175,4 @@ if DASHBOARD_URL:
             payload=payload
         )
     except Exception:
-        passpass
+        pass
