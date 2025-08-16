@@ -107,7 +107,7 @@ def confidence_to_words(score: float) -> str:
     elif percent >= 40:
         return "I am somewhat confident"
     elif percent >= 15:
-        return "I am not very confident"
+        return "I am a bit confident"
     else:
         return "I am unsure"
 
@@ -120,7 +120,7 @@ comment = f"""
 {summary}
 
 ## 📂 🎯 Predicted Category  
-### 🟢 **{top_label.upper()}**  
+### 🟢 **This is most likely a {top_label.upper()} Issue.**  
 {confidence_words} with this prediction ({score * 100:.2f}% confidence).
 
 **💡 Suggested Next Steps**  
