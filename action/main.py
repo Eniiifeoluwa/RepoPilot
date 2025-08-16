@@ -114,7 +114,7 @@ def confidence_to_words(score: float) -> str:
 confidence_words = confidence_to_words(score)
 
 comment = f"""
-### 🤖 AI Assistant Report
+### 🤖 RepoPilot Report
 
 **📝 Summary**  
 {summary}

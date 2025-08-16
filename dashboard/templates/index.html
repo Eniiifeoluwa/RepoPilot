@@ -2,14 +2,14 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>AI GitHub Assistant</title>
+  <title> RepoPilot GitHub Assistant</title>
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <style>
     body {
       font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Arial, sans-serif;
       margin: 0;
       padding: 0;
-      background: linear-gradient(135deg, #f9f9ff, #f0f4ff);
+      background: linear-gradient(135deg, #f8fafc, #eef2ff);
       color: #222;
     }
 
@@ -24,7 +24,7 @@
     h1 {
       margin: 0;
       font-size: 28px;
-      font-weight: 700;
+      font-weight: 800;
       letter-spacing: -0.5px;
     }
 
@@ -38,14 +38,18 @@
       margin-bottom: 20px;
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 15px;
     }
 
-    select {
-      padding: 8px 12px;
+    select, input[type="text"] {
+      padding: 10px 14px;
       border-radius: 6px;
       border: 1px solid #ccc;
       font-size: 14px;
+    }
+
+    input[type="text"] {
+      flex: 1;
     }
 
     table {
@@ -58,16 +62,18 @@
     }
 
     th, td {
-      padding: 12px 14px;
+      padding: 14px 16px;
       text-align: left;
     }
 
     th {
-      background: #f9fafb;
-      font-weight: 600;
-      font-size: 14px;
-      color: #444;
-      border-bottom: 2px solid #e5e7eb;
+      background: linear-gradient(90deg, #eef2ff, #e0e7ff);
+      font-weight: 700;
+      font-size: 15px;
+      color: #1e1e2f;
+      border-bottom: 2px solid #d1d5db;
+      letter-spacing: 0.3px;
+      text-transform: uppercase;
     }
 
     td {
@@ -98,9 +104,7 @@
       color: #374151;
     }
 
-    .label.bug { background: #fee2e2; color: #991b1b; }
     .label.feature { background: #d1fae5; color: #065f46; }
-    .label.docs { background: #dbeafe; color: #1e40af; }
 
     .muted {
       color: #888;
@@ -128,10 +132,10 @@
       <label for="filter">Filter by Label:</label>
       <select id="filter">
         <option value="all">All</option>
-        <option value="bug">Bug</option>
         <option value="feature">Feature</option>
-        <option value="docs">Docs</option>
       </select>
+
+      <input type="text" id="search" placeholder="🔎 Search by title or summary...">
     </div>
 
     <table id="issues-table">
@@ -153,10 +157,10 @@
           <td class="mono">{{ r[0] }}</td>
           <td><a target="_blank" href="https://github.com/{{ r[0] }}/issues/{{ r[1] }}">{{ r[1] }}</a></td>
           <td>{{ r[2] }}</td>
-          <td>{{ r[3] }}</td>
+          <td class="title">{{ r[3] }}</td>
           <td><span class="label {{ r[4]|lower }}">{{ r[4] }}</span></td>
           <td>{{ "%.2f"|format(r[5]) }}</td>
-          <td><pre>{{ r[6] }}</pre></td>
+          <td class="summary"><pre>{{ r[6] }}</pre></td>
           <td class="muted">{{ r[7] }}</td>
         </tr>
         {% endfor %}
@@ -166,16 +170,27 @@
 
   <script>
     const filter = document.getElementById('filter');
-    filter.addEventListener('change', () => {
-      const value = filter.value;
-      document.querySelectorAll('#issues-table tbody tr').forEach(row => {
-        if (value === 'all' || row.dataset.label === value) {
-          row.style.display = '';
-        } else {
-          row.style.display = 'none';
-        }
+    const search = document.getElementById('search');
+    const rows = document.querySelectorAll('#issues-table tbody tr');
+
+    function applyFilters() {
+      const filterValue = filter.value;
+      const searchValue = search.value.toLowerCase();
+
+      rows.forEach(row => {
+        const label = row.dataset.label;
+        const title = row.querySelector('.title').textContent.toLowerCase();
+        const summary = row.querySelector('.summary').textContent.toLowerCase();
+
+        const matchesFilter = (filterValue === 'all' || label === filterValue);
+        const matchesSearch = (title.includes(searchValue) || summary.includes(searchValue));
+
+        row.style.display = (matchesFilter && matchesSearch) ? '' : 'none';
       });
-    });
+    }
+
+    filter.addEventListener('change', applyFilters);
+    search.addEventListener('input', applyFilters);
   </script>
 </body>
 </html>
