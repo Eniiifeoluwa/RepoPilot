@@ -69,8 +69,7 @@ Issue:
 """
 
 cls_prompt = f"""
-You are the best AI that categorizes GitHub issues, and I am sure. 
-Identify the issue.     
+You are the best AI that categorizes GitHub issues, identify the issue.     
 Here is the issue text:
 {txt_for_cls}
 """
