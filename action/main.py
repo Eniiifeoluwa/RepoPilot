@@ -24,21 +24,30 @@ if not EVENT_PATH or not REPO or not TOKEN:
 with open(EVENT_PATH, "r", encoding="utf-8") as f:
     event = json.load(f)
 
-if "issue" in event:
+is_issue = "issue" in event
+is_pr = "pull_request" in event
+
+if not (is_issue or is_pr):
+    exit(0)
+
+title = ""
+body = ""
+number = 0
+etype = ""
+
+if is_issue:
     obj = event["issue"]
     title = obj.get("title", "") or ""
     body = obj.get("body", "") or ""
     number = obj["number"]
     etype = "issue"
 
-elif "pull_request" in event:
+if is_pr:
     obj = event["pull_request"]
     title = obj.get("title", "") or ""
     body = obj.get("body", "") or ""
     number = obj["number"]
-    # normalize to "issue" for dashboard
-    etype = "issue"
-
+    etype = "pull_request"
 else:
     exit(0)
 
@@ -151,7 +160,7 @@ if DASHBOARD_URL:
         payload = {
             "repo": REPO,
             "number": number,
-            "type": etype,   # always "issue"
+            "type": etype,   
             "summary": summary,
             "label": top_label,
             "score": score,
