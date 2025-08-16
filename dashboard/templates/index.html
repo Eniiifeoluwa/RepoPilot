@@ -1,305 +1,181 @@
 <!doctype html>
-<html lang="en">
+<html>
 <head>
   <meta charset="utf-8">
   <title>AI GitHub Assistant</title>
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <style>
-    * {
+    body {
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Arial, sans-serif;
       margin: 0;
       padding: 0;
-      box-sizing: border-box;
+      background: linear-gradient(135deg, #f9f9ff, #f0f4ff);
+      color: #222;
     }
 
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      min-height: 100vh;
-      padding: 20px;
-      color: #333;
+    header {
+      background: linear-gradient(90deg, #4f46e5, #6366f1, #8b5cf6);
+      color: white;
+      padding: 24px 20px;
+      text-align: center;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
     }
 
     .container {
-      max-width: 1400px;
-      margin: 0 auto;
-      background: rgba(255, 255, 255, 0.95);
-      backdrop-filter: blur(20px);
-      border-radius: 24px;
-      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.1);
-      overflow: hidden;
-      animation: slideIn 0.8s ease-out;
+      max-width: 1200px;
+      margin: 30px auto;
+      padding: 0 20px;
     }
 
-    @keyframes slideIn {
-      from {
-        opacity: 0;
-        transform: translateY(30px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
-    .header {
-      background: linear-gradient(135deg, #24292f 0%, #0d1117 100%);
-      color: white;
-      padding: 40px;
-      text-align: center;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .header h1 {
-      font-size: 2.5rem;
-      font-weight: 700;
-      margin-bottom: 10px;
-      background: linear-gradient(45deg, #f093fb 0%, #f5576c 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-
-    .repo-name {
-      display: inline-block;
-      font-family: 'SF Mono', monospace;
-      font-size: 1.1rem;
-      background: rgba(255, 255, 255, 0.15);
-      padding: 8px 16px;
-      border-radius: 20px;
-      margin-top: 10px;
-    }
-
-    .header p {
-      font-size: 1.1rem;
-      opacity: 0.8;
-      margin-top: 10px;
-    }
-
-    .search-container {
-      padding: 30px 40px;
-      background: linear-gradient(135deg, #f8f9ff 0%, #e8edff 100%);
-      border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-    }
-
-    .search-box {
+    .controls {
+      margin-bottom: 20px;
       display: flex;
-      gap: 15px;
       align-items: center;
-      max-width: 600px;
-      margin: 0 auto;
+      gap: 10px;
     }
 
-    .search-input {
-      flex: 1;
-      padding: 15px 20px;
-      border: 2px solid transparent;
-      border-radius: 12px;
-      font-size: 16px;
-      background: white;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-      transition: all 0.3s ease;
-    }
-
-    .search-input:focus {
-      outline: none;
-      border-color: #667eea;
-      box-shadow: 0 8px 30px rgba(102, 126, 234, 0.15);
-      transform: translateY(-2px);
-    }
-
-    .clear-btn {
-      padding: 15px 20px;
-      background: transparent;
-      color: #666;
-      border: 2px solid #ddd;
-      border-radius: 12px;
-      font-size: 16px;
-      cursor: pointer;
-      transition: all 0.3s ease;
-    }
-
-    .clear-btn:hover {
-      background: #f8f9fa;
-      border-color: #ccc;
-    }
-
-    .table-container {
-      overflow-x: auto;
-      padding: 0;
+    select {
+      padding: 8px 12px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      font-size: 14px;
     }
 
     table {
-      width: 100%;
       border-collapse: collapse;
+      width: 100%;
       background: white;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
     }
 
-    thead th {
-      background: linear-gradient(135deg, #f8f9ff 0%, #e8edff 100%);
-      color: #2d3748;
-      font-weight: 700;
-      padding: 20px 15px;
+    th, td {
+      padding: 12px 14px;
       text-align: left;
-      font-size: 14px;
-      text-transform: uppercase;
-      border-bottom: 2px solid #e2e8f0;
     }
 
-    tbody tr {
-      transition: all 0.3s ease;
-      border-bottom: 1px solid #f1f5f9;
-    }
-
-    tbody tr:hover {
-      background: linear-gradient(135deg, #f8faff 0%, #f0f4ff 100%);
-      transform: scale(1.01);
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-    }
-
-    tbody td {
-      padding: 20px 15px;
-      vertical-align: top;
-      border: none;
-    }
-
-    .issue-link {
-      color: #0066cc;
-      text-decoration: none;
+    th {
+      background: #f9fafb;
       font-weight: 600;
-      padding: 6px 12px;
-      border-radius: 8px;
-      background: #e6f3ff;
-      transition: all 0.3s ease;
-      display: inline-block;
+      font-size: 14px;
+      color: #444;
+      border-bottom: 2px solid #e5e7eb;
     }
 
-    .issue-link:hover {
-      background: #0066cc;
-      color: white;
-      transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(0, 102, 204, 0.3);
+    td {
+      border-bottom: 1px solid #f0f0f0;
+      font-size: 14px;
+      vertical-align: top;
+    }
+
+    tr:hover {
+      background: #f9f9ff;
+    }
+
+    .mono {
+      font-family: ui-monospace, Consolas, monospace;
+      font-size: 12px;
+      color: #444;
     }
 
     .label {
       display: inline-block;
-      padding: 6px 12px;
-      border-radius: 16px;
+      padding: 4px 8px;
+      border-radius: 6px;
       font-size: 12px;
       font-weight: 600;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-      box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
-      cursor: pointer;
-      transition: all 0.3s ease;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      background: #e5e7eb;
+      color: #374151;
     }
 
-    .label:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
-    }
-
-    .score {
-      font-weight: 700;
-      color: #059669;
-      background: #ecfdf5;
-      padding: 8px 12px;
-      border-radius: 8px;
-      font-size: 14px;
-    }
-
-    .summary {
-      max-width: 300px;
-      line-height: 1.6;
-      color: #4a5568;
-      background: #f8fafc;
-      padding: 12px;
-      border-radius: 8px;
-      border-left: 4px solid #667eea;
-    }
+    .label.bug { background: #fee2e2; color: #991b1b; }
+    .label.feature { background: #d1fae5; color: #065f46; }
+    .label.docs { background: #dbeafe; color: #1e40af; }
 
     .muted {
-      color: #718096;
-      font-size: 14px;
-      font-weight: 500;
+      color: #888;
+      font-size: 12px;
     }
 
-    .hidden {
-      display: none !important;
+    pre {
+      white-space: pre-wrap;
+      max-width: 420px;
+      overflow: hidden;
+      font-size: 13px;
+      background: #f9fafb;
+      padding: 6px 8px;
+      border-radius: 6px;
     }
   </style>
 </head>
 <body>
+  <header>
+    <h1>🤖 AI GitHub Assistant Dashboard</h1>
+  </header>
+
   <div class="container">
-    <div class="header">
-      <h1>🤖 AI GitHub Assistant</h1>
-      <div class="repo-name">{{ repo_name or "your-username/your-repo" }}</div>
-      <p>Live monitoring of issues with AI-powered insights</p>
+    <div class="controls">
+      <label for="filter">Filter by Label:</label>
+      <select id="filter">
+        <option value="all">All</option>
+        <option value="bug">Bug</option>
+        <option value="feature">Feature</option>
+        <option value="docs">Docs</option>
+      </select>
     </div>
 
-    <div class="search-container">
-      <div class="search-box">
-        <input type="text" id="searchInput" class="search-input" placeholder="Search by issue number, title, label, or summary...">
-        <button onclick="clearSearch()" class="clear-btn">✕ Clear</button>
-      </div>
-    </div>
-
-    <div class="table-container">
-      <table id="dataTable">
-        <thead>
-          <tr>
-            <th>#</th>
-            <th>Type</th>
-            <th>Title</th>
-            <th>Label</th>
-            <th>Score</th>
-            <th>Summary</th>
-            <th>When</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for r in rows %}
-          <tr>
-            <td><a href="https://github.com/{{ repo_name }}/issues/{{ r[1] }}" target="_blank" class="issue-link">#{{ r[1] }}</a></td>
-            <td>{{ r[2] }}</td>
-            <td>{{ r[3] }}</td>
-            <td><span class="label" onclick="searchByLabel('{{ r[4] }}')">{{ r[4] }}</span></td>
-            <td><span class="score">{{ "%.2f"|format(r[5]) }}</span></td>
-            <td><div class="summary">{{ r[6] }}</div></td>
-            <td class="muted">{{ r[7] }}</td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
+    <table id="issues-table">
+      <thead>
+        <tr>
+          <th>Repo</th>
+          <th>#</th>
+          <th>Type</th>
+          <th>Title</th>
+          <th>Label</th>
+          <th>Score</th>
+          <th>Summary</th>
+          <th>When</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in rows %}
+        <tr data-label="{{ r[4]|lower }}">
+          <td class="mono">{{ r[0] }}</td>
+          <td><a target="_blank" href="https://github.com/{{ r[0] }}/issues/{{ r[1] }}">{{ r[1] }}</a></td>
+          <td>{{ r[2] }}</td>
+          <td>{{ r[3] }}</td>
+          <td><span class="label {{ r[4]|lower }}">{{ r[4] }}</span></td>
+          <td>{{ "%.2f"|format(r[5]) }}</td>
+          <td><pre>{{ r[6] }}</pre></td>
+          <td class="muted">{{ r[7] }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
   </div>
 
   <script>
-    let allRows = [];
-
-    document.addEventListener('DOMContentLoaded', function() {
-      const tbody = document.querySelector('#dataTable tbody');
-      allRows = Array.from(tbody.querySelectorAll('tr'));
-    });
-
-    function searchTable() {
-      const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
-      allRows.forEach(row => {
-        const rowText = row.textContent.toLowerCase();
-        row.classList.toggle('hidden', !rowText.includes(searchTerm));
+    const filter = document.getElementById('filter');
+    filter.addEventListener('change', () => {
+      const value = filter.value;
+      document.querySelectorAll('#issues-table tbody tr').forEach(row => {
+        if (value === 'all' || row.dataset.label === value) {
+          row.style.display = '';
+        } else {
+          row.style.display = 'none';
+        }
       });
-    }
-
-    function clearSearch() {
-      document.getElementById('searchInput').value = '';
-      allRows.forEach(row => row.classList.remove('hidden'));
-    }
-
-    function searchByLabel(label) {
-      document.getElementById('searchInput').value = label;
-      searchTable();
-    }
-
-    document.getElementById('searchInput').addEventListener('input', searchTable);
+    });
   </script>
 </body>
 </html>
