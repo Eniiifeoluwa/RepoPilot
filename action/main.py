@@ -20,20 +20,28 @@ if not EVENT_PATH or not REPO or not TOKEN:
 with open(EVENT_PATH, "r", encoding="utf-8") as f:
     event = json.load(f)
 
-# detect event type from payload keys instead of relying only on env
-if "issue" in event:
-    obj = event["issue"]
-    title = obj.get("title", "") or ""
-    body = obj.get("body", "") or ""
-    number = obj["number"]
-    etype = "issue"
-
-elif "pull_request" in event:
+# detect event type from payload keys - check PR first to avoid misdetection
+if "pull_request" in event and event["pull_request"] is not None:
     obj = event["pull_request"]
-    title = obj.get("title", "") or ""
-    body = obj.get("body", "") or ""
-    number = obj["number"]
-    etype = "pull_request"
+    # Additional verification - ensure it's actually a PR with head/base refs
+    if "head" in obj and "base" in obj:
+        title = obj.get("title", "") or ""
+        body = obj.get("body", "") or ""
+        number = obj["number"]
+        etype = "pull_request"
+    else:
+        exit(0)
+
+elif "issue" in event and event["issue"] is not None:
+    obj = event["issue"]
+    # Make sure it's not a PR masquerading as an issue
+    if not obj.get("pull_request"):
+        title = obj.get("title", "") or ""
+        body = obj.get("body", "") or ""
+        number = obj["number"]
+        etype = "issue"
+    else:
+        exit(0)
 
 else:
     exit(0)
