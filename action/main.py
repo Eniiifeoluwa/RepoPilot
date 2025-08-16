@@ -1,0 +1,135 @@
+import os
+import json
+import requests
+import time
+from transformers import pipeline, AutoTokenizer, logging
+
+logging.set_verbosity_error()
+
+EVENT_PATH = os.getenv("GITHUB_EVENT_PATH")
+REPO = os.getenv("GITHUB_REPOSITORY")
+TOKEN = os.getenv("GITHUB_TOKEN")
+DASHBOARD_URL = os.getenv("DASHBOARD_URL", "").strip()
+HF_HOME = os.getenv("HF_HOME", "/tmp/hf_home")
+os.environ.setdefault("HF_HOME", HF_HOME)
+os.environ.setdefault("TRANSFORMERS_CACHE", HF_HOME)
+
+if not EVENT_PATH or not REPO or not TOKEN:
+    exit(0)
+
+with open(EVENT_PATH, "r", encoding="utf-8") as f:
+    event = json.load(f)
+
+is_issue = "issue" in event
+is_pr = "pull_request" in event
+
+if not (is_issue or is_pr):
+    exit(0)
+
+title = ""
+body = ""
+number = 0
+etype = ""
+
+if is_issue:
+    obj = event["issue"]
+    title = obj.get("title", "") or ""
+    body = obj.get("body", "") or ""
+    number = obj["number"]
+    etype = "issue"
+
+if is_pr:
+    obj = event["pull_request"]
+    title = obj.get("title", "") or ""
+    body = obj.get("body", "") or ""
+    number = obj["number"]
+    etype = "pull_request"
+
+text = (title + "\n\n" + body).strip()
+if not text:
+    text = "(empty)"
+
+# trim to safe length for CPU runs
+MAX_SUMMARY_CHARS = 1500
+MAX_CLASSIFY_CHARS = 1200
+txt_for_sum = text[:MAX_SUMMARY_CHARS]
+txt_for_cls = text[:MAX_CLASSIFY_CHARS]
+
+# light models for CPU
+SUM_MODEL = "sshleifer/distilbart-cnn-6-6"
+CLS_MODEL = "valhalla/distilbart-mnli-12-1"
+
+# init pipelines (device=-1 forces CPU)
+try:
+    summarizer = pipeline("summarization", model=SUM_MODEL, device=-1)
+except Exception:
+    summarizer = pipeline("summarization", model=SUM_MODEL)
+
+try:
+    classifier = pipeline("zero-shot-classification", model=CLS_MODEL, device=-1)
+except Exception:
+    classifier = pipeline("zero-shot-classification", model=CLS_MODEL)
+
+labels = ["bug", "feature", "documentation", "question", "enhancement", "refactor", "test", "ci", "security"]
+
+def safe_post(url, headers, payload, retries=2, timeout=10):
+    for i in range(retries+1):
+        try:
+            r = requests.post(url, headers=headers, json=payload, timeout=timeout)
+            return r
+        except Exception:
+            time.sleep(1)
+    return None
+
+# summarization
+try:
+    s = summarizer(txt_for_sum, max_length=80, min_length=20, do_sample=False)
+    summary = s[0]["summary_text"].strip()
+except Exception:
+    summary = txt_for_sum[:280] + ("..." if len(txt_for_sum) > 280 else "")
+
+# classification
+try:
+    pred = classifier(txt_for_cls, labels, multi_label=False)
+    top_label = pred["labels"][0]
+    score = float(pred["scores"][0])
+except Exception:
+    top_label = "question"
+    score = 0.0
+
+# prepare comment
+comment = f"### AI Summary\n{summary}\n\n### Suggested Label\n`{top_label}` ({score:.2f})"
+
+headers = {
+    "Authorization": f"token {TOKEN}",
+    "Accept": "application/vnd.github+json"
+}
+
+post_url = f"https://api.github.com/repos/{REPO}/issues/{number}/comments"
+try:
+    requests.post(post_url, headers=headers, json={"body": comment}, timeout=10)
+except Exception:
+    pass
+
+# attempt to add label (best-effort)
+try:
+    label_url = f"https://api.github.com/repos/{REPO}/issues/{number}/labels"
+    requests.post(label_url, headers=headers, json={"labels": [top_label]}, timeout=10)
+except Exception:
+    pass
+
+# push to dashboard if set
+if DASHBOARD_URL:
+    try:
+        payload = {
+            "repo": REPO,
+            "number": number,
+            "type": etype,
+            "summary": summary,
+            "label": top_label,
+            "score": score,
+            "title": title
+        }
+        _ = safe_post(DASHBOARD_URL.rstrip("/") + "/ingest", headers={"Content-Type": "application/json"}, payload=payload)
+    except Exception:
+        pass
