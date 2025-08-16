@@ -60,6 +60,25 @@ if not text:
 
 txt_for_sum = text[:1500]
 txt_for_cls = text[:1200]
+summary_prompt = f"""
+Summarize the following GitHub issue in 1-2 sentences.
+Focus on the **core problem or request**, ignore minor details.
+
+Issue:
+{txt_for_sum}
+"""
+
+cls_prompt = f"""
+You are an AI that categorizes GitHub issues. 
+Identify if the issue is a documentation problem. 
+Documentation issues include:
+- Incorrect code examples
+- Outdated or missing instructions
+- Misleading explanations in README, wikis, or comments
+
+Here is the issue text:
+{txt_for_cls}
+"""
 
 # --- Load Models ---
 SUM_MODEL = "sshleifer/distilbart-cnn-6-6"
@@ -88,14 +107,14 @@ def safe_post(url, headers, payload, retries=2, timeout=10):
 
 # --- Summarize ---
 try:
-    s = summarizer(txt_for_sum, max_length=80, min_length=20, do_sample=False)
+    s = summarizer(summary_prompt, max_length=80, min_length=20, do_sample=False)
     summary = s[0]["summary_text"].strip()
 except Exception:
     summary = txt_for_sum[:280] + ("..." if len(txt_for_sum) > 280 else "")
 
 # --- Classify ---
 try:
-    pred = classifier(txt_for_cls, labels, multi_label=False)
+    pred = classifier(prompt, labels, multi_label=False)
     top_label = pred["labels"][0]
     score = float(pred["scores"][0])
 except Exception:
