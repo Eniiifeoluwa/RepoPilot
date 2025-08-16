@@ -1,0 +1,100 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>AI GitHub Assistant</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <style>
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Arial,sans-serif;margin:20px;max-width:1100px}
+    h1{margin-bottom:14px}
+    table{border-collapse:collapse;width:100%}
+    th,td{border:1px solid #ddd;padding:8px;vertical-align:top}
+    th{background:#f5f5f5;text-align:left}
+    .mono{font-family:ui-monospace,Consolas,monospace;font-size:12px}
+    .label{display:inline-block;padding:2px 6px;border-radius:4px;background:#eee}
+    .muted{color:#666}
+    pre{white-space:pre-wrap;max-width:420px;overflow:hidden}
+  </style>
+</head>
+<body>
+  <h1>AI GitHub Assistant</h1>
+  <table>
+    <thead>
+      <tr>
+        <th>Repo</th>
+        <th>#</th>
+        <th>Type</th>
+        <th>Title</th>
+        <th>Label</th>
+        <th>Score</th>
+        <th>Summary</th>
+        <th>When</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in rows %}
+      <tr>
+        <td class="mono">{{ r[0] }}</td>
+        <td><a target="_blank" href="https://github.com/{{ r[0] }}/issues/{{ r[1] }}">{{ r[1] }}</a></td>
+        <td>{{ r[2] }}</td>
+        <td>{{ r[3] }}</td>
+        <td><span class="label">{{ r[4] }}</span></td>
+        <td>{{ "%.2f"|format(r[5]) }}</td>
+        <td><pre>{{ r[6] }}</pre></td>
+        <td class="muted">{{ r[7] }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</body>
+</html>
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>AI GitHub Assistant</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <style>
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Arial,sans-serif;margin:20px;max-width:1100px}
+    h1{margin-bottom:14px}
+    table{border-collapse:collapse;width:100%}
+    th,td{border:1px solid #ddd;padding:8px;vertical-align:top}
+    th{background:#f5f5f5;text-align:left}
+    .mono{font-family:ui-monospace,Consolas,monospace;font-size:12px}
+    .label{display:inline-block;padding:2px 6px;border-radius:4px;background:#eee}
+    .muted{color:#666}
+    pre{white-space:pre-wrap;max-width:420px;overflow:hidden}
+  </style>
+</head>
+<body>
+  <h1>AI GitHub Assistant</h1>
+  <table>
+    <thead>
+      <tr>
+        <th>Repo</th>
+        <th>#</th>
+        <th>Type</th>
+        <th>Title</th>
+        <th>Label</th>
+        <th>Score</th>
+        <th>Summary</th>
+        <th>When</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in rows %}
+      <tr>
+        <td class="mono">{{ r[0] }}</td>
+        <td><a target="_blank" href="https://github.com/{{ r[0] }}/issues/{{ r[1] }}">{{ r[1] }}</a></td>
+        <td>{{ r[2] }}</td>
+        <td>{{ r[3] }}</td>
+        <td><span class="label">{{ r[4] }}</span></td>
+        <td>{{ "%.2f"|format(r[5]) }}</td>
+        <td><pre>{{ r[6] }}</pre></td>
+        <td class="muted">{{ r[7] }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</body>
+</html>
