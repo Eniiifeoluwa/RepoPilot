@@ -4,12 +4,15 @@ import requests
 import time
 from transformers import pipeline, logging
 
+# suppress warnings
 logging.set_verbosity_error()
 
+# --- Environment setup ---
 EVENT_PATH = os.getenv("GITHUB_EVENT_PATH")
 REPO = os.getenv("GITHUB_REPOSITORY")
 TOKEN = os.getenv("GITHUB_TOKEN")
 DASHBOARD_URL = os.getenv("DASHBOARD_URL", "").strip()
+
 HF_HOME = os.getenv("HF_HOME", "/tmp/hf_home")
 os.environ.setdefault("HF_HOME", HF_HOME)
 os.environ.setdefault("TRANSFORMERS_CACHE", HF_HOME)
@@ -17,31 +20,24 @@ os.environ.setdefault("TRANSFORMERS_CACHE", HF_HOME)
 if not EVENT_PATH or not REPO or not TOKEN:
     exit(0)
 
+# --- Load GitHub Event Payload ---
 with open(EVENT_PATH, "r", encoding="utf-8") as f:
     event = json.load(f)
 
-# detect event type from payload keys - check PR first to avoid misdetection
-if "pull_request" in event and event["pull_request"] is not None:
-    obj = event["pull_request"]
-    # Additional verification - ensure it's actually a PR with head/base refs
-    if "head" in obj and "base" in obj:
-        title = obj.get("title", "") or ""
-        body = obj.get("body", "") or ""
-        number = obj["number"]
-        etype = "pull_request"
-    else:
-        exit(0)
-
-elif "issue" in event and event["issue"] is not None:
+if "issue" in event:
     obj = event["issue"]
-    # Make sure it's not a PR masquerading as an issue
-    if not obj.get("pull_request"):
-        title = obj.get("title", "") or ""
-        body = obj.get("body", "") or ""
-        number = obj["number"]
-        etype = "issue"
-    else:
-        exit(0)
+    title = obj.get("title", "") or ""
+    body = obj.get("body", "") or ""
+    number = obj["number"]
+    etype = "issue"
+
+elif "pull_request" in event:
+    obj = event["pull_request"]
+    title = obj.get("title", "") or ""
+    body = obj.get("body", "") or ""
+    number = obj["number"]
+    # normalize to "issue" for dashboard
+    etype = "issue"
 
 else:
     exit(0)
@@ -50,17 +46,14 @@ text = (title + "\n\n" + body).strip()
 if not text:
     text = "(empty)"
 
-# trim to safe length for CPU runs
-MAX_SUMMARY_CHARS = 1500
-MAX_CLASSIFY_CHARS = 1200
-txt_for_sum = text[:MAX_SUMMARY_CHARS]
-txt_for_cls = text[:MAX_CLASSIFY_CHARS]
+# --- Truncate to safe lengths ---
+txt_for_sum = text[:1500]
+txt_for_cls = text[:1200]
 
-# light models for CPU
+# --- Models (lightweight CPU) ---
 SUM_MODEL = "sshleifer/distilbart-cnn-6-6"
 CLS_MODEL = "valhalla/distilbart-mnli-12-1"
 
-# init pipelines (device=-1 forces CPU)
 try:
     summarizer = pipeline("summarization", model=SUM_MODEL, device=-1)
 except Exception:
@@ -74,22 +67,22 @@ except Exception:
 labels = ["bug", "feature", "documentation", "question", "enhancement", "refactor", "test", "ci", "security"]
 
 def safe_post(url, headers, payload, retries=2, timeout=10):
-    for i in range(retries+1):
+    """Retry POST requests a few times before giving up"""
+    for i in range(retries + 1):
         try:
-            r = requests.post(url, headers=headers, json=payload, timeout=timeout)
-            return r
+            return requests.post(url, headers=headers, json=payload, timeout=timeout)
         except Exception:
             time.sleep(1)
     return None
 
-# summarization
+# --- Summarize ---
 try:
     s = summarizer(txt_for_sum, max_length=80, min_length=20, do_sample=False)
     summary = s[0]["summary_text"].strip()
 except Exception:
     summary = txt_for_sum[:280] + ("..." if len(txt_for_sum) > 280 else "")
 
-# classification
+# --- Classify ---
 try:
     pred = classifier(txt_for_cls, labels, multi_label=False)
     top_label = pred["labels"][0]
@@ -98,7 +91,7 @@ except Exception:
     top_label = "question"
     score = 0.0
 
-# prepare comment
+# --- Confidence description ---
 def confidence_to_words(score: float) -> str:
     percent = score * 100
     if percent >= 80:
@@ -114,6 +107,7 @@ def confidence_to_words(score: float) -> str:
 
 confidence_words = confidence_to_words(score)
 
+# --- Comment to GitHub ---
 comment = f"""
 ### 🤖 RepoPilot Report
 
@@ -121,7 +115,7 @@ comment = f"""
 {summary}
 
 ## 📂 🎯 Predicted Category  
-### 🟢 **This is most likely a {top_label.upper()} {etype.capitalize()}.**  
+### 🟢 **This is most likely a {top_label.upper()} Issue.**  
 {confidence_words} with this prediction ({score * 100:.2f}% confidence).
 
 **💡 Suggested Next Steps**  
@@ -138,31 +132,35 @@ headers = {
     "Accept": "application/vnd.github+json"
 }
 
-post_url = f"https://api.github.com/repos/{REPO}/issues/{number}/comments"
 try:
+    post_url = f"https://api.github.com/repos/{REPO}/issues/{number}/comments"
     requests.post(post_url, headers=headers, json={"body": comment}, timeout=10)
 except Exception:
     pass
 
-# attempt to add label (best-effort)
+# --- Add label (best effort) ---
 try:
     label_url = f"https://api.github.com/repos/{REPO}/issues/{number}/labels"
     requests.post(label_url, headers=headers, json={"labels": [top_label]}, timeout=10)
 except Exception:
     pass
 
-# push to dashboard if set
+# --- Push to Dashboard ---
 if DASHBOARD_URL:
     try:
         payload = {
             "repo": REPO,
             "number": number,
-            "type": etype,
+            "type": etype,   # always "issue"
             "summary": summary,
             "label": top_label,
             "score": score,
             "title": title
         }
-        _ = safe_post(DASHBOARD_URL.rstrip("/") + "/ingest", headers={"Content-Type": "application/json"}, payload=payload)
+        _ = safe_post(
+            DASHBOARD_URL.rstrip("/") + "/ingest",
+            headers={"Content-Type": "application/json"},
+            payload=payload
+        )
     except Exception:
         pass
