@@ -42,7 +42,8 @@ async def ingest(item: dict):
         raise HTTPException(status_code=400, detail="bad payload")
 
     # Normalize type
-    issue_type = "Pull Request" if item["type"].lower().startswith("pull") else "Issue"
+    # In your dashboard app.py
+    issue_type = "Pull Request" if item["type"].lower().startswith("pull") else "issue"
 
     conn = sqlite3.connect(DB_PATH)
     cur = conn.cursor()
