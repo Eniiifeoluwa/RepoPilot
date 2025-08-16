@@ -165,10 +165,13 @@ except Exception:
 # --- Push to Dashboard ---
 if DASHBOARD_URL:
     try:
+        # Convert etype to dashboard expected format
+        dashboard_type = "pr" if etype == "pull_request" else "issue"
+        
         payload = {
             "repo": REPO,
             "number": number,
-            "type": etype,   
+            "type": dashboard_type,   
             "summary": summary,
             "label": top_label,
             "score": score,
