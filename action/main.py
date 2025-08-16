@@ -20,21 +20,15 @@ if not EVENT_PATH or not REPO or not TOKEN:
 with open(EVENT_PATH, "r", encoding="utf-8") as f:
     event = json.load(f)
 
-event_name = os.getenv("GITHUB_EVENT_NAME", "")
-
-title = ""
-body = ""
-number = 0
-etype = ""
-
-if event_name == "issues":
+# detect event type from payload keys instead of relying only on env
+if "issue" in event:
     obj = event["issue"]
     title = obj.get("title", "") or ""
     body = obj.get("body", "") or ""
     number = obj["number"]
     etype = "issue"
 
-elif event_name == "pull_request":
+elif "pull_request" in event:
     obj = event["pull_request"]
     title = obj.get("title", "") or ""
     body = obj.get("body", "") or ""
