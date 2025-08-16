@@ -35,19 +35,27 @@ body = ""
 number = 0
 etype = ""
 
-if is_issue:
-    obj = event["issue"]
-    title = obj.get("title", "") or ""
-    body = obj.get("body", "") or ""
-    number = obj["number"]
-    etype = "issue"
-
-if is_pr:
+# Check for PR first to avoid misdetection (PRs can contain issue objects)
+if is_pr and event["pull_request"] is not None:
     obj = event["pull_request"]
-    title = obj.get("title", "") or ""
-    body = obj.get("body", "") or ""
-    number = obj["number"]
-    etype = "pull_request"
+    # Verify it's actually a PR by checking for head/base refs
+    if "head" in obj and "base" in obj:
+        title = obj.get("title", "") or ""
+        body = obj.get("body", "") or ""
+        number = obj["number"]
+        etype = "pull_request"
+    else:
+        exit(0)
+elif is_issue and event["issue"] is not None:
+    obj = event["issue"]
+    # Make sure it's not a PR masquerading as an issue
+    if not obj.get("pull_request"):
+        title = obj.get("title", "") or ""
+        body = obj.get("body", "") or ""
+        number = obj["number"]
+        etype = "issue"
+    else:
+        exit(0)
 else:
     exit(0)
 
@@ -124,7 +132,7 @@ comment = f"""
 {summary}
 
 ## 📂 🎯 Predicted Category  
-### 🟢 **This is most likely a {top_label.upper()} Issue.**  
+### 🟢 **This is most likely a {top_label.upper()} {etype.capitalize()}.**  
 {confidence_words} with this prediction ({score * 100:.2f}% confidence).
 
 **💡 Suggested Next Steps**  
