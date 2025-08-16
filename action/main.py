@@ -59,7 +59,7 @@ if not text:
     text = "(empty)"
 
 txt_for_sum = text[:1500]
-txt_for_cls = text[:1200]
+txt_for_cls = text[:1500]
 summary_prompt = f"""
 Summarize the following GitHub issue in 1-2 sentences.
 Focus on the **core problem or request**, ignore minor details.
