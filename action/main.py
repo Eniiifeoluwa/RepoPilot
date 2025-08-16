@@ -76,7 +76,7 @@ Here is the issue text:
 
 # --- Load Models ---
 SUM_MODEL = "sshleifer/distilbart-cnn-6-6"
-CLS_MODEL = "typeform/distilbert-base-uncased-mnli"
+CLS_MODEL = "valhalla/distilbart-mnli-12-1"
 
 try:
     summarizer = pipeline("summarization", model=SUM_MODEL, device=-1)
