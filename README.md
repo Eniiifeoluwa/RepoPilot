@@ -147,7 +147,7 @@ When someone opens or edits an issue or PR, RepoPilot:
 
 <div align="center">
 
-![Dashboard Preview]("assets/RepoPilot Dashboard.png")
+![Dashboard Preview](assets/Dashboard.png)
 
 ### Powerful Repository Insights at Your Fingertips
 
