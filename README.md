@@ -7,9 +7,9 @@
 **Intelligent GitHub workflow automation that understands your code**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![GitHub Issues](https://img.shields.io/github/issues/your-username/RepoPilot)](https://github.com/Eniiifeoluwa/RepoPilot/issues)
-[![GitHub Stars](https://img.shields.io/github/stars/your-username/RepoPilot)](https://github.com/Eniiifeoluwa/RepoPilot/stargazers)
-[![GitHub Forks](https://img.shields.io/github/forks/your-username/RepoPilot)](https://github.com/Eniiifeoluwa/RepoPilot/network)
+[![GitHub Issues](https://img.shields.io/github/issues/Eniiifeoluwa/RepoPilot)](https://github.com/Eniiifeoluwa/RepoPilot/issues)
+[![GitHub Stars](https://img.shields.io/github/stars/Eniiifeoluwa/RepoPilot)](https://github.com/Eniiifeoluwa/RepoPilot/stargazers)
+[![GitHub Forks](https://img.shields.io/github/forks/Eniiifeoluwa/RepoPilot)](https://github.com/Eniiifeoluwa/RepoPilot/network)
 
 [🎬 Demo](#-demo) • [⚡ Quick Start](#-quick-start) • [📊 Dashboard](#-dashboard) 
 </div>
