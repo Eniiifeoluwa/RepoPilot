@@ -35,12 +35,7 @@ RepoPilot is an AI-powered GitHub workflow that **automatically analyzes**, **su
 <div align="center">
 
 ### See RepoPilot in Action
-
-<video width="640" height="360" controls>
-  <source src="assets/AI Assistant Demo.mp4" type="video/mp4">
-  Your browser does not support the video tag.
-</video>
-
+[![RepoPilot Demo](https://img.youtube.com/vi/5BahS4r4CRg/maxresdefault.jpg)](https://www.youtube.com/watch?v=5BahS4r4CRg)
 *Watch how RepoPilot automatically analyzes a new issue and provides intelligent insights*
 
 </div>
