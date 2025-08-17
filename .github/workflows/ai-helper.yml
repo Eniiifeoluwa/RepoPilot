@@ -1,4 +1,4 @@
-name: AI Helper
+name: RepoPilot AI Assistant
 
 on:
   issues:
