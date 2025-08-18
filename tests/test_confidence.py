@@ -1,4 +1,3 @@
-# tests/test_main.py
 import os
 import pytest
 import json
@@ -15,10 +14,8 @@ def patch_requests_post(monkeypatch):
 def patch_pipelines(monkeypatch):
     mock_pipeline = MagicMock()
     
-    # Mock summarizer
     mock_summarizer = MagicMock()
     mock_summarizer.return_value = [{"summary_text": "Mock summary"}]
-    # Mock classifier
     mock_classifier = MagicMock()
     mock_classifier.return_value = {"labels": ["bug"], "scores": [0.85]}
     
