@@ -1,5 +1,6 @@
 name: ai-github-assistant
 description: Summarize issues/PRs and suggest labels (CPU-optimized)
+
 inputs:
   github_token:
     description: GitHub token
@@ -8,6 +9,7 @@ inputs:
     description: Optional dashboard ingest URL
     required: false
     default: ""
+
 runs:
   using: "composite"
   steps:
@@ -41,6 +43,12 @@ runs:
         TRANSFORMERS_CACHE: /tmp/hf_home
       run: |
         python $GITHUB_ACTION_PATH/main.py
-    - name: Run tests
+
+    - name: 🧪 Run tests
+      shell: bash
+      env:
+        GITHUB_EVENT_PATH: ${{ github.event_path }}
+        GITHUB_REPOSITORY: ${{ github.repository }}
+        GITHUB_TOKEN: ${{ inputs.github_token }}
       run: |
-        pytest tests/ -v
+        pytest tests/ -v --disable-warnings
